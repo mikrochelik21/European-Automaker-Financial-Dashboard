@@ -7,7 +7,10 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from charts.performance import create_performance_chart
-from charts.fundamentals import create_revenue_income_chart
+from charts.fundamentals import (
+    create_ebitda_margin_chart,
+    create_revenue_income_chart,
+)
 from charts.valuation import create_valuation_charts
 from data.prices import (
     build_indexed_prices,
@@ -17,6 +20,7 @@ from data.prices import (
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
 from data.fundamentals import (
     add_ebitda_fallback,
+    calculate_ebitda_margin,
     fetch_cash_flow_statement,
     fetch_income_statement,
     prepare_fundamentals,
@@ -111,6 +115,15 @@ class PrepareFundamentalsTests(unittest.TestCase):
 
         self.assertTrue(pd.isna(prepared.loc[pd.Timestamp("2023-12-31"), "EBITDA"]))
 
+    def test_calculates_ebitda_margin_as_percentage(self):
+        fundamentals = pd.DataFrame(
+            {"Revenue": [100.0, 200.0], "EBITDA": [10.0, 30.0]}
+        )
+
+        margin = calculate_ebitda_margin(fundamentals)
+
+        self.assertEqual(margin.tolist(), [10.0, 15.0])
+
 
 class AddEbitdaFallbackTests(unittest.TestCase):
     def test_fills_missing_ebitda_without_overwriting_reported_values(self):
@@ -134,6 +147,37 @@ class AddEbitdaFallbackTests(unittest.TestCase):
 
         self.assertEqual(completed.loc[year, "EBITDA"], 20.0)
         self.assertEqual(completed.loc[pd.Timestamp("2022-12-31"), "EBITDA"], 20.0)
+
+
+class FundamentalsChartTests(unittest.TestCase):
+    def test_combines_revenue_bars_and_net_income_line(self):
+        fundamentals = pd.DataFrame(
+            {
+                "Revenue": [100_000_000_000, 120_000_000_000],
+                "Net income": [8_000_000_000, 10_000_000_000],
+            },
+            index=pd.to_datetime(["2022-12-31", "2023-12-31"]),
+        )
+
+        figure = create_revenue_income_chart(fundamentals, "BMW")
+
+        self.assertEqual(len(figure.data), 2)
+        self.assertEqual(figure.data[0].type, "bar")
+        self.assertEqual(figure.data[1].type, "scatter")
+        self.assertEqual(figure.data[1].yaxis, "y2")
+
+    def test_creates_ebitda_margin_line_chart(self):
+        margin = pd.Series(
+            [10.0, 12.5],
+            index=pd.to_datetime(["2022-12-31", "2023-12-31"]),
+            name="EBITDA margin",
+        )
+
+        figure = create_ebitda_margin_chart(margin, "BMW")
+
+        self.assertEqual(len(figure.data), 1)
+        self.assertEqual(figure.data[0].type, "scatter")
+        self.assertEqual(figure.layout.yaxis.title.text, "EBITDA margin (%)")
 
 
 class FetchValuationSnapshotTests(unittest.TestCase):

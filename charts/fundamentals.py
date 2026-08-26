@@ -43,3 +43,26 @@ def create_revenue_income_chart(
         barmode="group",
     )
     return figure
+
+
+def create_ebitda_margin_chart(ebitda_margin: pd.Series, company_name: str) -> object:
+    """Build an EBITDA-margin trend chart."""
+    import plotly.graph_objects as go
+
+    figure = go.Figure(
+        go.Scatter(
+            x=ebitda_margin.index,
+            y=ebitda_margin,
+            mode="lines+markers",
+            name="EBITDA margin",
+            line={"color": "#00A19C", "width": 3},
+            hovertemplate="%{x|%Y}<br>EBITDA margin: %{y:.2f}%<extra></extra>",
+        )
+    )
+    figure.update_layout(
+        title=f"{company_name}: EBITDA margin",
+        xaxis_title="Fiscal year",
+        yaxis_title="EBITDA margin (%)",
+        hovermode="x unified",
+    )
+    return figure

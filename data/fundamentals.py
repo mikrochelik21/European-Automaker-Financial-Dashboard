@@ -71,3 +71,13 @@ def add_ebitda_fallback(
     fallback = operating_income.add(depreciation, fill_value=pd.NA)
     completed["EBITDA"] = completed["EBITDA"].fillna(fallback)
     return completed
+
+
+def calculate_ebitda_margin(fundamentals: pd.DataFrame) -> pd.Series:
+    """Calculate EBITDA margin as a percentage of revenue."""
+    required_columns = {"Revenue", "EBITDA"}
+    if not required_columns.issubset(fundamentals.columns):
+        raise ValueError("Fundamentals must include revenue and EBITDA")
+
+    revenue = fundamentals["Revenue"].replace(0, pd.NA)
+    return fundamentals["EBITDA"].div(revenue).mul(100).rename("EBITDA margin")
