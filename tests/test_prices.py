@@ -2,9 +2,11 @@
 
 import pandas as pd
 import unittest
+from importlib.util import find_spec
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from charts.performance import create_performance_chart
 from data.prices import fetch_price_history, normalize_prices
 
 
@@ -21,6 +23,23 @@ class FetchPriceHistoryTests(unittest.TestCase):
             history = fetch_price_history("MBG.DE", "2020-01-01")
 
         pd.testing.assert_frame_equal(history, expected)
+
+
+@unittest.skipUnless(find_spec("plotly"), "Plotly is not installed")
+class PerformanceChartTests(unittest.TestCase):
+    def test_chart_contains_one_trace_per_company(self):
+        indexed_prices = pd.DataFrame(
+            {"BMW": [100.0, 105.0], "Renault": [100.0, 98.0]},
+            index=pd.to_datetime(["2020-01-01", "2020-01-02"]),
+        )
+
+        figure = create_performance_chart(
+            indexed_prices,
+            {"BMW": "#1C69D4", "Renault": "#F5B700"},
+        )
+
+        self.assertEqual(len(figure.data), 2)
+        self.assertEqual(figure.layout.hovermode, "x unified")
 
 
 class NormalizePricesTests(unittest.TestCase):
