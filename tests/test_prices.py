@@ -14,7 +14,12 @@ from data.prices import (
     normalize_prices,
 )
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
-from data.fundamentals import fetch_income_statement, prepare_fundamentals
+from data.fundamentals import (
+    add_ebitda_fallback,
+    fetch_cash_flow_statement,
+    fetch_income_statement,
+    prepare_fundamentals,
+)
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -59,6 +64,24 @@ class FetchIncomeStatementTests(unittest.TestCase):
                 fetch_income_statement("RNO.PA")
 
 
+class FetchCashFlowStatementTests(unittest.TestCase):
+    def test_returns_annual_cash_flow_columns_in_chronological_order(self):
+        latest = pd.Timestamp("2024-12-31")
+        oldest = pd.Timestamp("2022-12-31")
+        expected = pd.DataFrame(
+            {latest: [12.0], oldest: [10.0]},
+            index=["Depreciation And Amortization"],
+        )
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(cashflow=expected)
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            statement = fetch_cash_flow_statement("MBG.DE")
+
+        self.assertEqual(statement.columns.tolist(), [oldest, latest])
+
+
 class PrepareFundamentalsTests(unittest.TestCase):
     def test_selects_chart_metrics_and_years(self):
         statement = pd.DataFrame(
@@ -86,6 +109,30 @@ class PrepareFundamentalsTests(unittest.TestCase):
         prepared = prepare_fundamentals(statement)
 
         self.assertTrue(pd.isna(prepared.loc[pd.Timestamp("2023-12-31"), "EBITDA"]))
+
+
+class AddEbitdaFallbackTests(unittest.TestCase):
+    def test_fills_missing_ebitda_without_overwriting_reported_values(self):
+        year = pd.Timestamp("2023-12-31")
+        fundamentals = pd.DataFrame(
+            {"Revenue": [120.0, 100.0], "Net income": [10.0, 8.0], "EBITDA": [None, 20.0]},
+            index=[year, pd.Timestamp("2022-12-31")],
+        )
+        income_statement = pd.DataFrame(
+            {year: [15.0]}, index=["Operating Income"]
+        )
+        cash_flow = pd.DataFrame(
+            {year: [5.0]}, index=["Depreciation And Amortization"]
+        )
+
+        completed = add_ebitda_fallback(
+            fundamentals,
+            income_statement,
+            cash_flow,
+        )
+
+        self.assertEqual(completed.loc[year, "EBITDA"], 20.0)
+        self.assertEqual(completed.loc[pd.Timestamp("2022-12-31"), "EBITDA"], 20.0)
 
 
 class FetchValuationSnapshotTests(unittest.TestCase):
