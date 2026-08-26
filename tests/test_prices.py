@@ -12,7 +12,7 @@ from data.prices import (
     fetch_price_history,
     normalize_prices,
 )
-from data.valuation import fetch_valuation_snapshot
+from data.valuation import build_valuation_table, fetch_valuation_snapshot
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -60,6 +60,24 @@ class FetchValuationSnapshotTests(unittest.TestCase):
 
         self.assertIsNone(snapshot["EV/EBITDA"])
         self.assertIsNone(snapshot["P/B"])
+
+
+class BuildValuationTableTests(unittest.TestCase):
+    def test_builds_company_by_metric_table(self):
+        snapshots = {
+            "BMW": {"P/E": 7.5, "EV/EBITDA": 4.2, "P/B": 0.8},
+            "Renault": {"P/E": 5.1, "EV/EBITDA": 3.3, "P/B": 0.6},
+        }
+
+        table = build_valuation_table(snapshots)
+
+        self.assertEqual(table.index.tolist(), ["BMW", "Renault"])
+        self.assertEqual(table.columns.tolist(), ["P/E", "EV/EBITDA", "P/B"])
+        self.assertEqual(table.loc["Renault", "EV/EBITDA"], 3.3)
+
+    def test_rejects_empty_snapshot_mapping(self):
+        with self.assertRaisesRegex(ValueError, "At least one company"):
+            build_valuation_table({})
 
 
 @unittest.skipUnless(find_spec("plotly"), "Plotly is not installed")
