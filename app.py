@@ -9,8 +9,9 @@ from charts.fundamentals import (
     create_ebitda_margin_chart,
     create_revenue_income_chart,
 )
+from charts.forecast import create_revenue_forecast_chart
 from charts.valuation import create_valuation_charts
-from config import COMPANIES, COMPANY_COLORS, DEFAULT_START_DATE
+from config import COMPANIES, COMPANY_COLORS, DEFAULT_START_DATE, FORECAST_YEARS
 from data.fundamentals import (
     add_ebitda_fallback,
     calculate_ebitda_margin,
@@ -20,6 +21,7 @@ from data.fundamentals import (
 )
 from data.prices import build_indexed_prices, fetch_price_history
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
+from data.forecast import forecast_revenue
 
 
 st.set_page_config(
@@ -131,4 +133,33 @@ with fundamentals_tab:
 
 with forecast_tab:
     st.subheader("Revenue forecast")
-    st.info("The forecast panel will be added in a later block.")
+    selected_ticker = COMPANIES[selected_company]
+    try:
+        with st.spinner("Building revenue forecast..."):
+            income_statement = fetch_income_statement(selected_ticker)
+            forecast_fundamentals = prepare_fundamentals(income_statement)
+            revenue_forecast = forecast_revenue(
+                forecast_fundamentals["Revenue"],
+                forecast_years=FORECAST_YEARS,
+            )
+
+        st.plotly_chart(
+            create_revenue_forecast_chart(
+                forecast_fundamentals["Revenue"],
+                revenue_forecast,
+                selected_company,
+            ),
+            use_container_width=True,
+        )
+        st.caption(
+            "This is a linear trend extrapolation based on historical revenue, "
+            "not a valuation model."
+        )
+        st.dataframe(
+            revenue_forecast.div(1_000_000_000).round(2),
+            use_container_width=True,
+        )
+    except ValueError as error:
+        st.error(f"Revenue forecast could not be prepared: {error}")
+    except Exception:
+        st.error("Revenue forecast is temporarily unavailable. Please try again later.")
