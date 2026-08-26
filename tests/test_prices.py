@@ -2,8 +2,25 @@
 
 import pandas as pd
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
-from data.prices import normalize_prices
+from data.prices import fetch_price_history, normalize_prices
+
+
+class FetchPriceHistoryTests(unittest.TestCase):
+    def test_fetches_adjusted_history_from_yahoo_finance(self):
+        expected = pd.DataFrame({"Close": [20.0, 22.0]})
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(
+                history=lambda **kwargs: expected
+            )
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            history = fetch_price_history("MBG.DE", "2020-01-01")
+
+        pd.testing.assert_frame_equal(history, expected)
 
 
 class NormalizePricesTests(unittest.TestCase):
