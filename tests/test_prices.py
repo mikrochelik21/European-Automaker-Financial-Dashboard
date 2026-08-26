@@ -25,6 +25,7 @@ from data.fundamentals import (
     fetch_income_statement,
     prepare_fundamentals,
 )
+from data.forecast import forecast_revenue
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -178,6 +179,27 @@ class FundamentalsChartTests(unittest.TestCase):
         self.assertEqual(len(figure.data), 1)
         self.assertEqual(figure.data[0].type, "scatter")
         self.assertEqual(figure.layout.yaxis.title.text, "EBITDA margin (%)")
+
+
+class ForecastRevenueTests(unittest.TestCase):
+    def test_projects_requested_number_of_future_years(self):
+        revenue = pd.Series(
+            [100.0, 110.0, 120.0],
+            index=pd.to_datetime(
+                ["2021-12-31", "2022-12-31", "2023-12-31"]
+            ),
+        )
+
+        forecast = forecast_revenue(revenue, forecast_years=2)
+
+        self.assertEqual(forecast.index.year.tolist(), [2024, 2025])
+        self.assertEqual(forecast["Revenue"].tolist(), [130.0, 140.0])
+        self.assertTrue((forecast["Lower bound"] <= forecast["Revenue"]).all())
+        self.assertTrue((forecast["Revenue"] <= forecast["Upper bound"]).all())
+
+    def test_rejects_insufficient_revenue_history(self):
+        with self.assertRaisesRegex(ValueError, "At least two"):
+            forecast_revenue(pd.Series([100.0]))
 
 
 class FetchValuationSnapshotTests(unittest.TestCase):
