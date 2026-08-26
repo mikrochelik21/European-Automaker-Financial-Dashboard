@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from charts.performance import create_performance_chart
+from charts.valuation import create_valuation_charts
 from data.prices import (
     build_indexed_prices,
     fetch_price_history,
@@ -78,6 +79,29 @@ class BuildValuationTableTests(unittest.TestCase):
     def test_rejects_empty_snapshot_mapping(self):
         with self.assertRaisesRegex(ValueError, "At least one company"):
             build_valuation_table({})
+
+
+class ValuationChartTests(unittest.TestCase):
+    def test_creates_sorted_chart_for_each_metric(self):
+        valuation_table = pd.DataFrame(
+            {
+                "P/E": [7.5, 5.1],
+                "EV/EBITDA": [4.2, 3.3],
+                "P/B": [0.8, 0.6],
+            },
+            index=["BMW", "Renault"],
+        )
+
+        charts = create_valuation_charts(
+            valuation_table,
+            {"BMW": "#1C69D4", "Renault": "#F5B700"},
+        )
+
+        self.assertEqual(list(charts), ["P/E", "EV/EBITDA", "P/B"])
+        self.assertEqual(list(charts["P/E"].data[0].x), ["Renault", "BMW"])
+        self.assertEqual(
+            list(charts["P/E"].data[0].marker.color), ["#F5B700", "#1C69D4"]
+        )
 
 
 @unittest.skipUnless(find_spec("plotly"), "Plotly is not installed")
