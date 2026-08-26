@@ -14,7 +14,7 @@ from data.prices import (
     normalize_prices,
 )
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
-from data.fundamentals import fetch_income_statement
+from data.fundamentals import fetch_income_statement, prepare_fundamentals
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -57,6 +57,35 @@ class FetchIncomeStatementTests(unittest.TestCase):
         with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
             with self.assertRaisesRegex(ValueError, "No income statement"):
                 fetch_income_statement("RNO.PA")
+
+
+class PrepareFundamentalsTests(unittest.TestCase):
+    def test_selects_chart_metrics_and_years(self):
+        statement = pd.DataFrame(
+            {
+                pd.Timestamp("2023-12-31"): [120.0, 10.0, 15.0],
+                pd.Timestamp("2022-12-31"): [100.0, 8.0, 13.0],
+            },
+            index=["Total Revenue", "Net Income", "EBITDA"],
+        )
+
+        prepared = prepare_fundamentals(statement)
+
+        self.assertEqual(
+            prepared.columns.tolist(), ["Revenue", "Net income", "EBITDA"]
+        )
+        self.assertEqual(prepared.index.tolist(), list(statement.columns))
+        self.assertEqual(prepared.loc[pd.Timestamp("2022-12-31"), "Revenue"], 100.0)
+
+    def test_allows_missing_ebitda_for_later_fallback(self):
+        statement = pd.DataFrame(
+            {pd.Timestamp("2023-12-31"): [120.0, 10.0]},
+            index=["Total Revenue", "Net Income"],
+        )
+
+        prepared = prepare_fundamentals(statement)
+
+        self.assertTrue(pd.isna(prepared.loc[pd.Timestamp("2023-12-31"), "EBITDA"]))
 
 
 class FetchValuationSnapshotTests(unittest.TestCase):
