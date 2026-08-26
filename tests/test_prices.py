@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from charts.performance import create_performance_chart
+from charts.fundamentals import create_revenue_income_chart
 from charts.valuation import create_valuation_charts
 from data.prices import (
     build_indexed_prices,
@@ -222,6 +223,25 @@ class PerformanceChartTests(unittest.TestCase):
         )
 
         self.assertEqual(len(figure.data), 2)
+        self.assertEqual(figure.layout.hovermode, "x unified")
+
+
+class FundamentalsChartTests(unittest.TestCase):
+    def test_combines_revenue_bars_and_net_income_line(self):
+        fundamentals = pd.DataFrame(
+            {
+                "Revenue": [100_000_000_000, 120_000_000_000],
+                "Net income": [8_000_000_000, 10_000_000_000],
+            },
+            index=pd.to_datetime(["2022-12-31", "2023-12-31"]),
+        )
+
+        figure = create_revenue_income_chart(fundamentals, "BMW")
+
+        self.assertEqual(len(figure.data), 2)
+        self.assertEqual(figure.data[0].type, "bar")
+        self.assertEqual(figure.data[1].type, "scatter")
+        self.assertEqual(figure.data[1].yaxis, "y2")
         self.assertEqual(figure.layout.hovermode, "x unified")
 
 
