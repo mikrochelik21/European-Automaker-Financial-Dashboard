@@ -2,6 +2,7 @@
 
 import pandas as pd
 import streamlit as st
+from collections.abc import Mapping
 
 
 @st.cache_data(ttl=3600)
@@ -31,3 +32,17 @@ def normalize_prices(prices: pd.DataFrame, close_column: str = "Close") -> pd.Da
         clean_prices[close_column].iloc[0]
     ).mul(100)
     return clean_prices
+
+
+def build_indexed_prices(
+    price_history_by_company: Mapping[str, pd.DataFrame],
+) -> pd.DataFrame:
+    """Align and normalize closing prices for several companies."""
+    if not price_history_by_company:
+        raise ValueError("At least one company price history is required")
+
+    indexed_by_company = {
+        company: normalize_prices(history)["Indexed price"]
+        for company, history in price_history_by_company.items()
+    }
+    return pd.concat(indexed_by_company, axis=1).dropna()

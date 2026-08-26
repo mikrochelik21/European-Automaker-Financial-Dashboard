@@ -7,7 +7,11 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from charts.performance import create_performance_chart
-from data.prices import fetch_price_history, normalize_prices
+from data.prices import (
+    build_indexed_prices,
+    fetch_price_history,
+    normalize_prices,
+)
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -66,6 +70,29 @@ class NormalizePricesTests(unittest.TestCase):
     def test_rejects_missing_close_column(self):
         with self.assertRaisesRegex(ValueError, "Missing required column"):
             normalize_prices(pd.DataFrame({"Price": [20.0]}))
+
+
+class BuildIndexedPricesTests(unittest.TestCase):
+    def test_aligns_companies_on_shared_dates(self):
+        dates = pd.to_datetime(["2020-01-01", "2020-01-02"])
+        histories = {
+            "BMW": pd.DataFrame({"Close": [100.0, 110.0]}, index=dates),
+            "Renault": pd.DataFrame(
+                {"Close": [50.0, None]},
+                index=dates,
+            ),
+        }
+
+        indexed_prices = build_indexed_prices(histories)
+
+        self.assertEqual(indexed_prices.columns.tolist(), ["BMW", "Renault"])
+        self.assertEqual(indexed_prices.index.tolist(), [dates[0]])
+        self.assertAlmostEqual(indexed_prices.loc[dates[0], "BMW"], 100.0)
+        self.assertAlmostEqual(indexed_prices.loc[dates[0], "Renault"], 100.0)
+
+    def test_rejects_empty_company_mapping(self):
+        with self.assertRaisesRegex(ValueError, "At least one company"):
+            build_indexed_prices({})
 
 
 if __name__ == "__main__":
