@@ -12,6 +12,7 @@ from data.prices import (
     fetch_price_history,
     normalize_prices,
 )
+from data.valuation import fetch_valuation_snapshot
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -27,6 +28,38 @@ class FetchPriceHistoryTests(unittest.TestCase):
             history = fetch_price_history("MBG.DE", "2020-01-01")
 
         pd.testing.assert_frame_equal(history, expected)
+
+
+class FetchValuationSnapshotTests(unittest.TestCase):
+    def test_fetches_requested_multiples(self):
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(
+                info={
+                    "trailingPE": 7.5,
+                    "enterpriseToEbitda": 4.2,
+                    "priceToBook": 0.8,
+                }
+            )
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            snapshot = fetch_valuation_snapshot("BMW.DE")
+
+        self.assertEqual(
+            snapshot,
+            {"P/E": 7.5, "EV/EBITDA": 4.2, "P/B": 0.8},
+        )
+
+    def test_preserves_missing_multiples_as_none(self):
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(info={"trailingPE": 7.5})
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            snapshot = fetch_valuation_snapshot("MBG.DE")
+
+        self.assertIsNone(snapshot["EV/EBITDA"])
+        self.assertIsNone(snapshot["P/B"])
 
 
 @unittest.skipUnless(find_spec("plotly"), "Plotly is not installed")
