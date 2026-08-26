@@ -11,6 +11,7 @@ from charts.fundamentals import (
     create_ebitda_margin_chart,
     create_revenue_income_chart,
 )
+from charts.forecast import create_revenue_forecast_chart
 from charts.valuation import create_valuation_charts
 from data.prices import (
     build_indexed_prices,
@@ -200,6 +201,30 @@ class ForecastRevenueTests(unittest.TestCase):
     def test_rejects_insufficient_revenue_history(self):
         with self.assertRaisesRegex(ValueError, "At least two"):
             forecast_revenue(pd.Series([100.0]))
+
+
+class ForecastChartTests(unittest.TestCase):
+    def test_contains_history_forecast_and_confidence_band(self):
+        historical = pd.Series(
+            [100_000_000_000, 110_000_000_000],
+            index=pd.to_datetime(["2022-12-31", "2023-12-31"]),
+        )
+        forecast = pd.DataFrame(
+            {
+                "Revenue": [120_000_000_000],
+                "Lower bound": [115_000_000_000],
+                "Upper bound": [125_000_000_000],
+            },
+            index=pd.to_datetime(["2024-12-31"]),
+        )
+
+        figure = create_revenue_forecast_chart(historical, forecast, "BMW")
+
+        self.assertEqual(len(figure.data), 4)
+        self.assertEqual(figure.data[0].type, "bar")
+        self.assertEqual(figure.data[1].line.dash, "dash")
+        self.assertEqual(figure.data[3].fill, "tonexty")
+        self.assertEqual(figure.layout.hovermode, "x unified")
 
 
 class FetchValuationSnapshotTests(unittest.TestCase):
