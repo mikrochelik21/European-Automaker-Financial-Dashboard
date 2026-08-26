@@ -14,6 +14,7 @@ from data.prices import (
     normalize_prices,
 )
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
+from data.fundamentals import fetch_income_statement
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -29,6 +30,33 @@ class FetchPriceHistoryTests(unittest.TestCase):
             history = fetch_price_history("MBG.DE", "2020-01-01")
 
         pd.testing.assert_frame_equal(history, expected)
+
+
+class FetchIncomeStatementTests(unittest.TestCase):
+    def test_returns_annual_columns_in_chronological_order(self):
+        latest = pd.Timestamp("2024-12-31")
+        oldest = pd.Timestamp("2022-12-31")
+        expected = pd.DataFrame(
+            {latest: [120.0], oldest: [100.0]},
+            index=["Total Revenue"],
+        )
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(financials=expected)
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            statement = fetch_income_statement("MBG.DE")
+
+        self.assertEqual(statement.columns.tolist(), [oldest, latest])
+
+    def test_rejects_empty_income_statement(self):
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(financials=pd.DataFrame())
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            with self.assertRaisesRegex(ValueError, "No income statement"):
+                fetch_income_statement("RNO.PA")
 
 
 class FetchValuationSnapshotTests(unittest.TestCase):
