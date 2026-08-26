@@ -5,8 +5,10 @@ from datetime import date
 import streamlit as st
 
 from charts.performance import create_performance_chart
+from charts.valuation import create_valuation_charts
 from config import COMPANIES, COMPANY_COLORS, DEFAULT_START_DATE
 from data.prices import build_indexed_prices, fetch_price_history
+from data.valuation import build_valuation_table, fetch_valuation_snapshot
 
 
 st.set_page_config(
@@ -62,7 +64,28 @@ with stock_tab:
 
 with valuation_tab:
     st.subheader("Valuation multiples")
-    st.info("The valuation panel will be added in a later block.")
+    try:
+        with st.spinner("Loading valuation data..."):
+            valuation_snapshots = {
+                company: fetch_valuation_snapshot(ticker)
+                for company, ticker in COMPANIES.items()
+            }
+            valuation_table = build_valuation_table(valuation_snapshots)
+            valuation_charts = create_valuation_charts(
+                valuation_table,
+                COMPANY_COLORS,
+            )
+
+        chart_columns = st.columns(len(valuation_charts))
+        for column, (metric, figure) in zip(chart_columns, valuation_charts.items()):
+            with column:
+                st.plotly_chart(figure, use_container_width=True)
+
+        st.dataframe(valuation_table.round(2), use_container_width=True)
+    except ValueError as error:
+        st.error(f"Valuation data could not be prepared: {error}")
+    except Exception:
+        st.error("Valuation data is temporarily unavailable. Please try again later.")
 
 with fundamentals_tab:
     st.subheader("Fundamental financials")
