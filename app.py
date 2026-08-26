@@ -48,6 +48,13 @@ with stock_tab:
             create_performance_chart(indexed_prices, COMPANY_COLORS),
             use_container_width=True,
         )
+        st.subheader("Indexed performance data")
+        display_prices = indexed_prices.copy()
+        display_prices.index.name = "Date"
+        st.dataframe(
+            display_prices.round(2),
+            use_container_width=True,
+        )
     except ValueError as error:
         st.error(f"Market data could not be prepared: {error}")
     except Exception:
