@@ -173,6 +173,10 @@ with fundamentals_tab:
             fundamentals = load_prepared_fundamentals(selected_ticker)
             ebitda_margin = calculate_ebitda_margin(fundamentals)
 
+        st.caption(
+            f"{selected_company} | {len(fundamentals)} annual observations | "
+            f"Latest fiscal year: {fundamentals.index[-1].year}"
+        )
         st.plotly_chart(
             create_revenue_income_chart(fundamentals, selected_company),
             width="stretch",
@@ -203,6 +207,10 @@ with forecast_tab:
                 forecast_years=FORECAST_YEARS,
             )
 
+        st.caption(
+            f"{selected_company} | {len(forecast_fundamentals)} historical years | "
+            f"Forecast horizon: {FORECAST_YEARS} years"
+        )
         st.plotly_chart(
             create_revenue_forecast_chart(
                 forecast_fundamentals["Revenue"],
