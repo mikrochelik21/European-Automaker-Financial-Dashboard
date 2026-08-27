@@ -159,7 +159,14 @@ with valuation_tab:
             with column:
                 st.plotly_chart(figure, width="stretch")
 
-        st.dataframe(valuation_table.round(2), width="stretch")
+        display_valuation = valuation_table.round(2).rename(
+            columns={
+                "P/E": "P/E (x)",
+                "EV/EBITDA": "EV/EBITDA (x)",
+                "P/B": "P/B (x)",
+            }
+        )
+        st.dataframe(display_valuation, width="stretch")
     except ValueError as error:
         st.error(f"Valuation data could not be prepared: {error}")
     except Exception:
@@ -185,7 +192,13 @@ with fundamentals_tab:
             create_ebitda_margin_chart(ebitda_margin, selected_company),
             width="stretch",
         )
-        display_fundamentals = fundamentals.div(1_000_000_000).round(2)
+        display_fundamentals = fundamentals.div(1_000_000_000).round(2).rename(
+            columns={
+                "Revenue": "Revenue (EUR bn)",
+                "Net income": "Net income (EUR bn)",
+                "EBITDA": "EBITDA (EUR bn)",
+            }
+        )
         display_fundamentals["EBITDA margin (%)"] = ebitda_margin.round(2)
         st.dataframe(display_fundamentals, width="stretch")
     except ValueError as error:
