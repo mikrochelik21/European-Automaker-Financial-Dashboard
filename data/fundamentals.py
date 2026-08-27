@@ -81,3 +81,16 @@ def calculate_ebitda_margin(fundamentals: pd.DataFrame) -> pd.Series:
 
     revenue = fundamentals["Revenue"].replace(0, pd.NA)
     return fundamentals["EBITDA"].div(revenue).mul(100).rename("EBITDA margin")
+
+
+@st.cache_data(ttl=3600)
+def load_prepared_fundamentals(ticker_symbol: str) -> pd.DataFrame:
+    """Fetch and prepare all annual fundamentals for one company."""
+    income_statement = fetch_income_statement(ticker_symbol)
+    cash_flow_statement = fetch_cash_flow_statement(ticker_symbol)
+    fundamentals = prepare_fundamentals(income_statement)
+    return add_ebitda_fallback(
+        fundamentals,
+        income_statement,
+        cash_flow_statement,
+    )

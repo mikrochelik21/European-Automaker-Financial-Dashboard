@@ -24,6 +24,7 @@ from data.fundamentals import (
     calculate_ebitda_margin,
     fetch_cash_flow_statement,
     fetch_income_statement,
+    load_prepared_fundamentals,
     prepare_fundamentals,
 )
 from data.forecast import forecast_revenue
@@ -149,6 +150,30 @@ class AddEbitdaFallbackTests(unittest.TestCase):
 
         self.assertEqual(completed.loc[year, "EBITDA"], 20.0)
         self.assertEqual(completed.loc[pd.Timestamp("2022-12-31"), "EBITDA"], 20.0)
+
+
+class LoadPreparedFundamentalsTests(unittest.TestCase):
+    def test_combines_income_and_cash_flow_data(self):
+        year = pd.Timestamp("2023-12-31")
+        income_statement = pd.DataFrame(
+            {year: [120.0, 10.0, 15.0]},
+            index=["Total Revenue", "Net Income", "Operating Income"],
+        )
+        cash_flow = pd.DataFrame(
+            {year: [5.0]}, index=["Depreciation And Amortization"]
+        )
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(
+                financials=income_statement,
+                cashflow=cash_flow,
+            )
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            prepared = load_prepared_fundamentals("STLAM.MI")
+
+        self.assertEqual(prepared.loc[year, "Revenue"], 120.0)
+        self.assertEqual(prepared.loc[year, "EBITDA"], 20.0)
 
 
 class FundamentalsChartTests(unittest.TestCase):

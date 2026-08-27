@@ -13,11 +13,8 @@ from charts.forecast import create_revenue_forecast_chart
 from charts.valuation import create_valuation_charts
 from config import COMPANIES, COMPANY_COLORS, DEFAULT_START_DATE, FORECAST_YEARS
 from data.fundamentals import (
-    add_ebitda_fallback,
     calculate_ebitda_margin,
-    fetch_cash_flow_statement,
-    fetch_income_statement,
-    prepare_fundamentals,
+    load_prepared_fundamentals,
 )
 from data.prices import build_indexed_prices, fetch_price_history
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
@@ -105,14 +102,7 @@ with fundamentals_tab:
     selected_ticker = COMPANIES[selected_company]
     try:
         with st.spinner("Loading fundamental data..."):
-            income_statement = fetch_income_statement(selected_ticker)
-            cash_flow_statement = fetch_cash_flow_statement(selected_ticker)
-            fundamentals = prepare_fundamentals(income_statement)
-            fundamentals = add_ebitda_fallback(
-                fundamentals,
-                income_statement,
-                cash_flow_statement,
-            )
+            fundamentals = load_prepared_fundamentals(selected_ticker)
             ebitda_margin = calculate_ebitda_margin(fundamentals)
 
         st.plotly_chart(
@@ -136,8 +126,7 @@ with forecast_tab:
     selected_ticker = COMPANIES[selected_company]
     try:
         with st.spinner("Building revenue forecast..."):
-            income_statement = fetch_income_statement(selected_ticker)
-            forecast_fundamentals = prepare_fundamentals(income_statement)
+            forecast_fundamentals = load_prepared_fundamentals(selected_ticker)
             revenue_forecast = forecast_revenue(
                 forecast_fundamentals["Revenue"],
                 forecast_years=FORECAST_YEARS,
