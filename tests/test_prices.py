@@ -19,6 +19,7 @@ from data.prices import (
     normalize_prices,
 )
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
+from data.summary import build_peer_summary
 from data.fundamentals import (
     add_ebitda_fallback,
     calculate_ebitda_margin,
@@ -300,6 +301,31 @@ class BuildValuationTableTests(unittest.TestCase):
     def test_rejects_empty_snapshot_mapping(self):
         with self.assertRaisesRegex(ValueError, "At least one company"):
             build_valuation_table({})
+
+
+class BuildPeerSummaryTests(unittest.TestCase):
+    def test_combines_latest_return_and_valuation_metrics(self):
+        indexed_prices = pd.DataFrame(
+            {"BMW": [100.0, 112.5], "Renault": [100.0, 98.0]},
+            index=pd.to_datetime(["2020-01-01", "2020-01-02"]),
+        )
+        valuation_table = pd.DataFrame(
+            {
+                "P/E": [7.5, 5.1],
+                "EV/EBITDA": [4.2, 3.3],
+                "P/B": [0.8, 0.6],
+            },
+            index=["BMW", "Renault"],
+        )
+
+        summary = build_peer_summary(indexed_prices, valuation_table)
+
+        self.assertEqual(
+            summary.columns.tolist(),
+            ["Stock return (%)", "P/E", "EV/EBITDA", "P/B"],
+        )
+        self.assertEqual(summary.loc["BMW", "Stock return (%)"], 12.5)
+        self.assertEqual(summary.loc["Renault", "P/B"], 0.6)
 
 
 class ValuationChartTests(unittest.TestCase):
