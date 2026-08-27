@@ -19,6 +19,21 @@ def fetch_price_history(ticker_symbol: str, start_date: str) -> pd.DataFrame:
     return history
 
 
+def fetch_price_histories(
+    companies: Mapping[str, str],
+    start_date: str,
+) -> tuple[dict[str, pd.DataFrame], dict[str, str]]:
+    """Fetch company prices while recording individual failures."""
+    histories = {}
+    failures = {}
+    for company, ticker_symbol in companies.items():
+        try:
+            histories[company] = fetch_price_history(ticker_symbol, start_date)
+        except Exception as error:
+            failures[company] = str(error)
+    return histories, failures
+
+
 def normalize_prices(prices: pd.DataFrame, close_column: str = "Close") -> pd.DataFrame:
     """Index closing prices to 100 on the first available observation."""
     if close_column not in prices.columns:

@@ -16,6 +16,7 @@ from charts.valuation import create_valuation_charts
 from data.prices import (
     build_indexed_prices,
     fetch_price_history,
+    fetch_price_histories,
     normalize_prices,
 )
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
@@ -44,6 +45,27 @@ class FetchPriceHistoryTests(unittest.TestCase):
             history = fetch_price_history("MBG.DE", "2020-01-01")
 
         pd.testing.assert_frame_equal(history, expected)
+
+    def test_records_partial_company_failures(self):
+        expected = pd.DataFrame({"Close": [20.0, 22.0]})
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(
+                history=(
+                    lambda **kwargs: expected
+                    if symbol == "MBG.DE"
+                    else (_ for _ in ()).throw(RuntimeError("rate limited"))
+                )
+            )
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            histories, failures = fetch_price_histories(
+                {"Mercedes-Benz": "MBG.DE", "BMW": "BMW.DE"},
+                "2020-01-01",
+            )
+
+        self.assertEqual(list(histories), ["Mercedes-Benz"])
+        self.assertIn("BMW", failures)
 
 
 class FetchIncomeStatementTests(unittest.TestCase):
