@@ -68,7 +68,7 @@ def add_ebitda_fallback(
 
     operating_income = income_statement.loc[OPERATING_INCOME_ROW]
     depreciation = cash_flow_statement.loc[DEPRECIATION_ROW]
-    fallback = operating_income.add(depreciation, fill_value=pd.NA)
+    fallback = operating_income.add(depreciation)
     completed["EBITDA"] = completed["EBITDA"].fillna(fallback)
     return completed
 
