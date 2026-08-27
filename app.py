@@ -17,6 +17,7 @@ from data.fundamentals import (
     load_prepared_fundamentals,
 )
 from data.prices import build_indexed_prices, fetch_price_history
+from data.summary import build_peer_summary
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
 from data.forecast import forecast_revenue
 
@@ -58,6 +59,24 @@ with stock_tab:
 
         st.plotly_chart(
             create_performance_chart(indexed_prices, COMPANY_COLORS),
+            width="stretch",
+        )
+        valuation_snapshots = {
+            company: fetch_valuation_snapshot(ticker)
+            for company, ticker in COMPANIES.items()
+        }
+        valuation_table = build_valuation_table(valuation_snapshots)
+        peer_summary = build_peer_summary(indexed_prices, valuation_table)
+        st.subheader("Peer comparison summary")
+        st.dataframe(
+            peer_summary.style.format(
+                {
+                    "Stock return (%)": "{:.2f}%",
+                    "P/E": "{:.2f}x",
+                    "EV/EBITDA": "{:.2f}x",
+                    "P/B": "{:.2f}x",
+                }
+            ),
             width="stretch",
         )
         st.subheader("Indexed performance data")
