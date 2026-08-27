@@ -19,7 +19,7 @@ from data.prices import (
     normalize_prices,
 )
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
-from data.summary import build_peer_summary
+from data.summary import build_peer_summary, calculate_peer_kpis
 from data.fundamentals import (
     add_ebitda_fallback,
     calculate_ebitda_margin,
@@ -326,6 +326,26 @@ class BuildPeerSummaryTests(unittest.TestCase):
         )
         self.assertEqual(summary.loc["BMW", "Stock return (%)"], 12.5)
         self.assertEqual(summary.loc["Renault", "P/B"], 0.6)
+
+
+class CalculatePeerKpisTests(unittest.TestCase):
+    def test_calculates_best_performer_and_valuation_headlines(self):
+        summary = pd.DataFrame(
+            {
+                "Stock return (%)": [12.5, -2.0],
+                "P/E": [7.5, 5.1],
+                "EV/EBITDA": [4.2, 3.3],
+                "P/B": [0.8, 0.6],
+            },
+            index=["BMW", "Renault"],
+        )
+
+        kpis = calculate_peer_kpis(summary)
+
+        self.assertEqual(kpis["Best performer"], "BMW")
+        self.assertEqual(kpis["Best performer return (%)"], 12.5)
+        self.assertEqual(kpis["Average P/E"], 6.3)
+        self.assertEqual(kpis["Lowest EV/EBITDA"], "Renault")
 
 
 class ValuationChartTests(unittest.TestCase):
