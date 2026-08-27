@@ -17,7 +17,7 @@ from data.fundamentals import (
     load_prepared_fundamentals,
 )
 from data.prices import build_indexed_prices, fetch_price_history
-from data.summary import build_peer_summary
+from data.summary import build_peer_summary, calculate_peer_kpis
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
 from data.forecast import forecast_revenue
 
@@ -67,6 +67,22 @@ with stock_tab:
         }
         valuation_table = build_valuation_table(valuation_snapshots)
         peer_summary = build_peer_summary(indexed_prices, valuation_table)
+        peer_kpis = calculate_peer_kpis(peer_summary)
+        kpi_columns = st.columns(3)
+        kpi_columns[0].metric(
+            "Best performer",
+            peer_kpis["Best performer"],
+            f"{peer_kpis['Best performer return (%)']:.2f}% return",
+        )
+        kpi_columns[1].metric(
+            "Average P/E",
+            f"{peer_kpis['Average P/E']:.2f}x",
+        )
+        kpi_columns[2].metric(
+            "Lowest EV/EBITDA",
+            peer_kpis["Lowest EV/EBITDA"],
+            f"{peer_kpis['Lowest EV/EBITDA value']:.2f}x",
+        )
         st.subheader("Peer comparison summary")
         st.dataframe(
             peer_summary.style.format(
