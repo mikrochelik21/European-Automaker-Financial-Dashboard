@@ -19,7 +19,11 @@ from data.prices import (
     fetch_price_histories,
     normalize_prices,
 )
-from data.valuation import build_valuation_table, fetch_valuation_snapshot
+from data.valuation import (
+    build_valuation_table,
+    fetch_valuation_snapshot,
+    fetch_valuation_snapshots,
+)
 from data.summary import build_peer_summary, calculate_peer_kpis
 from data.fundamentals import (
     add_ebitda_fallback,
@@ -305,6 +309,30 @@ class FetchValuationSnapshotTests(unittest.TestCase):
 
         self.assertIsNone(snapshot["EV/EBITDA"])
         self.assertIsNone(snapshot["P/B"])
+
+    def test_records_partial_valuation_failures(self):
+        valid_info = {
+            "trailingPE": 7.5,
+            "enterpriseToEbitda": 4.2,
+            "priceToBook": 0.8,
+        }
+        fake_yfinance = SimpleNamespace(
+            Ticker=lambda symbol: SimpleNamespace(
+                info=(
+                    valid_info
+                    if symbol == "STLAM.MI"
+                    else (_ for _ in ()).throw(RuntimeError("request failed"))
+                )
+            )
+        )
+
+        with patch.dict("sys.modules", {"yfinance": fake_yfinance}):
+            snapshots, failures = fetch_valuation_snapshots(
+                {"Mercedes-Benz": "STLAM.MI", "BMW": "BMW.TEST"}
+            )
+
+        self.assertEqual(list(snapshots), ["Mercedes-Benz"])
+        self.assertIn("BMW", failures)
 
 
 class BuildValuationTableTests(unittest.TestCase):

@@ -2,6 +2,7 @@
 
 import streamlit as st
 import pandas as pd
+from collections.abc import Mapping
 
 
 VALUATION_FIELDS = {
@@ -21,6 +22,20 @@ def fetch_valuation_snapshot(ticker_symbol: str) -> dict[str, float | None]:
         metric: info.get(yahoo_field)
         for metric, yahoo_field in VALUATION_FIELDS.items()
     }
+
+
+def fetch_valuation_snapshots(
+    companies: Mapping[str, str],
+) -> tuple[dict[str, dict[str, float | None]], dict[str, str]]:
+    """Fetch company valuations while recording individual failures."""
+    snapshots = {}
+    failures = {}
+    for company, ticker_symbol in companies.items():
+        try:
+            snapshots[company] = fetch_valuation_snapshot(ticker_symbol)
+        except Exception as error:
+            failures[company] = str(error)
+    return snapshots, failures
 
 
 def build_valuation_table(
