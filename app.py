@@ -1,6 +1,6 @@
 """Streamlit entry point for the European automaker dashboard."""
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 import streamlit as st
 
@@ -33,6 +33,16 @@ st.caption("A live peer comparison of five major European automakers.")
 
 with st.sidebar:
     st.header("Dashboard controls")
+    if st.button("Refresh data"):
+        st.session_state["last_refresh"] = datetime.now(timezone.utc)
+        st.cache_data.clear()
+        st.rerun()
+    if "last_refresh" not in st.session_state:
+        st.session_state["last_refresh"] = datetime.now(timezone.utc)
+    st.caption(
+        "Data checked: "
+        f"{st.session_state['last_refresh'].strftime('%Y-%m-%d %H:%M UTC')}"
+    )
     start_date = st.date_input(
         "Stock performance start date",
         value=date.fromisoformat(DEFAULT_START_DATE),
