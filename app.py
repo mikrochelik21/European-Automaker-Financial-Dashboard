@@ -16,7 +16,11 @@ from data.fundamentals import (
     calculate_ebitda_margin,
     load_prepared_fundamentals,
 )
-from data.prices import build_indexed_prices, fetch_price_histories
+from data.prices import (
+    build_indexed_prices,
+    fetch_price_histories,
+    get_latest_market_date,
+)
 from data.summary import build_peer_summary, calculate_peer_kpis
 from data.valuation import (
     build_valuation_table,
@@ -76,7 +80,12 @@ with stock_tab:
                     + ", ".join(price_failures)
                 )
             indexed_prices = build_indexed_prices(price_histories)
+            latest_market_date = get_latest_market_date(price_histories)
 
+        st.caption(
+            "Latest market observation: "
+            f"{latest_market_date.strftime('%d %b %Y')}"
+        )
         st.plotly_chart(
             create_performance_chart(indexed_prices, COMPANY_COLORS),
             width="stretch",

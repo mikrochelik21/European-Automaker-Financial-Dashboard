@@ -34,6 +34,15 @@ def fetch_price_histories(
     return histories, failures
 
 
+def get_latest_market_date(price_history_by_company: Mapping[str, pd.DataFrame]) -> pd.Timestamp:
+    """Return the latest date available across company price histories."""
+    if not price_history_by_company:
+        raise ValueError("At least one price history is required")
+
+    latest_dates = [history.index.max() for history in price_history_by_company.values()]
+    return max(latest_dates)
+
+
 def normalize_prices(prices: pd.DataFrame, close_column: str = "Close") -> pd.DataFrame:
     """Index closing prices to 100 on the first available observation."""
     if close_column not in prices.columns:

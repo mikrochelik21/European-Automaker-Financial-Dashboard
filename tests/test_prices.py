@@ -17,6 +17,7 @@ from data.prices import (
     build_indexed_prices,
     fetch_price_history,
     fetch_price_histories,
+    get_latest_market_date,
     normalize_prices,
 )
 from data.valuation import (
@@ -70,6 +71,26 @@ class FetchPriceHistoryTests(unittest.TestCase):
 
         self.assertEqual(list(histories), ["Mercedes-Benz"])
         self.assertIn("BMW", failures)
+
+
+class LatestMarketDateTests(unittest.TestCase):
+    def test_returns_latest_date_across_histories(self):
+        histories = {
+            "BMW": pd.DataFrame(
+                {"Close": [100.0]}, index=pd.to_datetime(["2024-01-02"])
+            ),
+            "Renault": pd.DataFrame(
+                {"Close": [100.0]}, index=pd.to_datetime(["2024-01-05"])
+            ),
+        }
+
+        latest_date = get_latest_market_date(histories)
+
+        self.assertEqual(latest_date, pd.Timestamp("2024-01-05"))
+
+    def test_rejects_empty_histories(self):
+        with self.assertRaisesRegex(ValueError, "At least one price"):
+            get_latest_market_date({})
 
 
 class FetchIncomeStatementTests(unittest.TestCase):
