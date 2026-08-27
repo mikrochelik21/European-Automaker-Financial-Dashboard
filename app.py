@@ -58,14 +58,14 @@ with stock_tab:
 
         st.plotly_chart(
             create_performance_chart(indexed_prices, COMPANY_COLORS),
-            use_container_width=True,
+            width="stretch",
         )
         st.subheader("Indexed performance data")
         display_prices = indexed_prices.copy()
         display_prices.index.name = "Date"
         st.dataframe(
             display_prices.round(2),
-            use_container_width=True,
+            width="stretch",
         )
     except ValueError as error:
         st.error(f"Market data could not be prepared: {error}")
@@ -89,9 +89,9 @@ with valuation_tab:
         chart_columns = st.columns(len(valuation_charts))
         for column, (metric, figure) in zip(chart_columns, valuation_charts.items()):
             with column:
-                st.plotly_chart(figure, use_container_width=True)
+                st.plotly_chart(figure, width="stretch")
 
-        st.dataframe(valuation_table.round(2), use_container_width=True)
+        st.dataframe(valuation_table.round(2), width="stretch")
     except ValueError as error:
         st.error(f"Valuation data could not be prepared: {error}")
     except Exception:
@@ -107,15 +107,15 @@ with fundamentals_tab:
 
         st.plotly_chart(
             create_revenue_income_chart(fundamentals, selected_company),
-            use_container_width=True,
+            width="stretch",
         )
         st.plotly_chart(
             create_ebitda_margin_chart(ebitda_margin, selected_company),
-            use_container_width=True,
+            width="stretch",
         )
         display_fundamentals = fundamentals.div(1_000_000_000).round(2)
         display_fundamentals["EBITDA margin (%)"] = ebitda_margin.round(2)
-        st.dataframe(display_fundamentals, use_container_width=True)
+        st.dataframe(display_fundamentals, width="stretch")
     except ValueError as error:
         st.error(f"Fundamental data could not be prepared: {error}")
     except Exception:
@@ -138,7 +138,7 @@ with forecast_tab:
                 revenue_forecast,
                 selected_company,
             ),
-            use_container_width=True,
+            width="stretch",
         )
         st.caption(
             "This is a linear trend extrapolation based on historical revenue, "
@@ -146,7 +146,7 @@ with forecast_tab:
         )
         st.dataframe(
             revenue_forecast.div(1_000_000_000).round(2),
-            use_container_width=True,
+            width="stretch",
         )
     except ValueError as error:
         st.error(f"Revenue forecast could not be prepared: {error}")
