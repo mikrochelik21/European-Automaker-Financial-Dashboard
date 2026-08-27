@@ -16,7 +16,7 @@ from data.fundamentals import (
     calculate_ebitda_margin,
     load_prepared_fundamentals,
 )
-from data.prices import build_indexed_prices, fetch_price_history
+from data.prices import build_indexed_prices, fetch_price_histories
 from data.summary import build_peer_summary, calculate_peer_kpis
 from data.valuation import build_valuation_table, fetch_valuation_snapshot
 from data.forecast import forecast_revenue
@@ -61,10 +61,15 @@ with stock_tab:
     st.subheader("Stock performance")
     try:
         with st.spinner("Loading market data..."):
-            price_histories = {
-                company: fetch_price_history(ticker, start_date.isoformat())
-                for company, ticker in COMPANIES.items()
-            }
+            price_histories, price_failures = fetch_price_histories(
+                COMPANIES,
+                start_date.isoformat(),
+            )
+            if price_failures:
+                st.warning(
+                    "Price data unavailable for: "
+                    + ", ".join(price_failures)
+                )
             indexed_prices = build_indexed_prices(price_histories)
 
         st.plotly_chart(
