@@ -18,7 +18,11 @@ from data.fundamentals import (
 )
 from data.prices import build_indexed_prices, fetch_price_histories
 from data.summary import build_peer_summary, calculate_peer_kpis
-from data.valuation import build_valuation_table, fetch_valuation_snapshot
+from data.valuation import (
+    build_valuation_table,
+    fetch_valuation_snapshot,
+    fetch_valuation_snapshots,
+)
 from data.forecast import forecast_revenue
 
 
@@ -126,10 +130,14 @@ with valuation_tab:
     st.subheader("Valuation multiples")
     try:
         with st.spinner("Loading valuation data..."):
-            valuation_snapshots = {
-                company: fetch_valuation_snapshot(ticker)
-                for company, ticker in COMPANIES.items()
-            }
+            valuation_snapshots, valuation_failures = fetch_valuation_snapshots(
+                COMPANIES
+            )
+            if valuation_failures:
+                st.warning(
+                    "Valuation data unavailable for: "
+                    + ", ".join(valuation_failures)
+                )
             valuation_table = build_valuation_table(valuation_snapshots)
             valuation_charts = create_valuation_charts(
                 valuation_table,
