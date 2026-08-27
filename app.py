@@ -1,4 +1,4 @@
-"""Streamlit entry point for the European automaker dashboard."""
+
 
 from datetime import date, datetime, timezone
 
