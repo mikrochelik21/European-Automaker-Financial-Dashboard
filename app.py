@@ -34,6 +34,7 @@ st.set_page_config(
 
 st.title("European Automaker Financial Dashboard")
 st.caption("A live peer comparison of five major European automakers.")
+st.caption("Source: Yahoo Finance via yfinance | Annual financial data and daily prices")
 
 with st.sidebar:
     st.header("Dashboard controls")
