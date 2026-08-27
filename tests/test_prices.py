@@ -35,6 +35,7 @@ from data.fundamentals import (
     prepare_fundamentals,
 )
 from data.forecast import calculate_forecast_metrics, forecast_revenue
+from data.scenarios import build_revenue_scenarios
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -289,6 +290,35 @@ class ForecastRevenueTests(unittest.TestCase):
     def test_rejects_insufficient_revenue_history(self):
         with self.assertRaisesRegex(ValueError, "At least two"):
             forecast_revenue(pd.Series([100.0]))
+
+
+class RevenueScenarioTests(unittest.TestCase):
+    def test_builds_bear_base_and_bull_cases(self):
+        base_forecast = pd.DataFrame(
+            {
+                "Revenue": [100.0, 110.0],
+                "Lower bound": [90.0, 100.0],
+                "Upper bound": [110.0, 120.0],
+            }
+        )
+
+        scenarios = build_revenue_scenarios(base_forecast, adjustment=0.10)
+
+        self.assertEqual(
+            scenarios.columns.tolist(), ["Bear case", "Base case", "Bull case"]
+        )
+        for actual, expected in zip(
+            scenarios.iloc[0], [90.0, 100.0, 110.0]
+        ):
+            self.assertAlmostEqual(actual, expected)
+
+    def test_rejects_invalid_adjustment(self):
+        base_forecast = pd.DataFrame(
+            {"Revenue": [100.0], "Lower bound": [90.0], "Upper bound": [110.0]}
+        )
+
+        with self.assertRaisesRegex(ValueError, "between 0 and 1"):
+            build_revenue_scenarios(base_forecast, adjustment=1.0)
 
 
 class ForecastChartTests(unittest.TestCase):
