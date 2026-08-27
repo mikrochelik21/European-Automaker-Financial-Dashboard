@@ -27,7 +27,7 @@ from data.valuation import (
     fetch_valuation_snapshot,
     fetch_valuation_snapshots,
 )
-from data.forecast import forecast_revenue
+from data.forecast import calculate_forecast_metrics, forecast_revenue
 
 
 st.set_page_config(
@@ -219,10 +219,30 @@ with forecast_tab:
                 forecast_fundamentals["Revenue"],
                 forecast_years=FORECAST_YEARS,
             )
+            forecast_metrics = calculate_forecast_metrics(
+                forecast_fundamentals["Revenue"]
+            )
 
         st.caption(
             f"{selected_company} | {len(forecast_fundamentals)} historical years | "
             f"Forecast horizon: {FORECAST_YEARS} years"
+        )
+        forecast_metric_columns = st.columns(4)
+        forecast_metric_columns[0].metric(
+            "Historical CAGR",
+            f"{forecast_metrics['Historical CAGR (%)']:.2f}%",
+        )
+        forecast_metric_columns[1].metric(
+            "Annual trend",
+            f"EUR {forecast_metrics['Annual trend (EUR)'] / 1_000_000_000:.2f}bn",
+        )
+        forecast_metric_columns[2].metric(
+            "R-squared",
+            f"{forecast_metrics['R-squared']:.2f}",
+        )
+        forecast_metric_columns[3].metric(
+            "Residual spread",
+            f"EUR {forecast_metrics['Residual standard deviation (EUR)'] / 1_000_000_000:.2f}bn",
         )
         st.plotly_chart(
             create_revenue_forecast_chart(

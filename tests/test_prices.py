@@ -34,7 +34,7 @@ from data.fundamentals import (
     load_prepared_fundamentals,
     prepare_fundamentals,
 )
-from data.forecast import forecast_revenue
+from data.forecast import calculate_forecast_metrics, forecast_revenue
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -256,6 +256,21 @@ class FundamentalsChartTests(unittest.TestCase):
 
 
 class ForecastRevenueTests(unittest.TestCase):
+    def test_calculates_forecast_diagnostics(self):
+        revenue = pd.Series(
+            [100.0, 110.0, 120.0],
+            index=pd.to_datetime(
+                ["2021-12-31", "2022-12-31", "2023-12-31"]
+            ),
+        )
+
+        metrics = calculate_forecast_metrics(revenue)
+
+        self.assertAlmostEqual(metrics["Annual trend (EUR)"], 10.0)
+        self.assertAlmostEqual(metrics["R-squared"], 1.0)
+        self.assertAlmostEqual(metrics["Residual standard deviation (EUR)"], 0.0)
+        self.assertAlmostEqual(metrics["Historical CAGR (%)"], 9.5445, places=3)
+
     def test_projects_requested_number_of_future_years(self):
         revenue = pd.Series(
             [100.0, 110.0, 120.0],
