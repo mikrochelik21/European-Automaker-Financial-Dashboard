@@ -177,7 +177,10 @@ with fundamentals_tab:
     except ValueError as error:
         st.error(f"Fundamental data could not be prepared: {error}")
     except Exception:
-        st.error("Fundamental data is temporarily unavailable. Please try again later.")
+        st.warning(
+            f"Fundamental data is unavailable for {selected_company}. "
+            "Please try again later."
+        )
 
 with forecast_tab:
     st.subheader("Revenue forecast")
@@ -209,4 +212,7 @@ with forecast_tab:
     except ValueError as error:
         st.error(f"Revenue forecast could not be prepared: {error}")
     except Exception:
-        st.error("Revenue forecast is temporarily unavailable. Please try again later.")
+        st.warning(
+            f"Revenue forecast is unavailable for {selected_company}. "
+            "Please try again later."
+        )
