@@ -1,0 +1,45 @@
+# European Automaker Financial Dashboard
+
+**Live dashboard:** [Add the Streamlit Community Cloud URL after deployment](https://streamlit.io/)
+
+Interactive financial analysis of Mercedes-Benz, BMW, Volkswagen, Stellantis, and Renault using live Yahoo Finance data.
+
+## What it shows
+
+- Normalized stock performance from a user-selected start date
+- Current P/E, EV/EBITDA, and P/B valuation comparisons
+- Historical revenue, net income, and EBITDA margin
+- Two-year revenue trend extrapolation with a 95% residual-based interval
+
+The forecast is a linear trend extrapolation, not a valuation model. It does not include management guidance, analyst estimates, macroeconomic scenarios, or company-specific events.
+
+## Tech stack
+
+Python, pandas, NumPy, Plotly, scikit-learn, Streamlit, and yfinance.
+
+## Run locally
+
+```powershell
+python -m pip install -r requirements.txt
+streamlit run app.py
+```
+
+Run the test suite with:
+
+```powershell
+python -m unittest discover -v
+```
+
+## Project structure
+
+```text
+app.py                 Streamlit entry point
+config.py              Companies, tickers, colors, and constants
+data/                  Cached data fetching and preparation
+charts/                Plotly chart builders
+tests/                 Offline unit tests
+```
+
+## Data source
+
+Market prices and financial statements are fetched from Yahoo Finance through the `yfinance` library. Data availability can vary by company and reporting period.
