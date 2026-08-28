@@ -22,6 +22,7 @@ from data.prices import (
     calculate_weekly_return_correlation,
     get_latest_market_date,
     normalize_prices,
+    summarize_correlation_pairs,
 )
 from data.valuation import (
     build_valuation_table,
@@ -117,6 +118,28 @@ class WeeklyReturnCorrelationTests(unittest.TestCase):
     def test_rejects_empty_histories(self):
         with self.assertRaisesRegex(ValueError, "At least one price"):
             calculate_weekly_return_correlation({})
+
+
+class CorrelationPairSummaryTests(unittest.TestCase):
+    def test_finds_strongest_and_weakest_pairs(self):
+        correlation = pd.DataFrame(
+            [[1.0, 0.8, 0.2], [0.8, 1.0, -0.1], [0.2, -0.1, 1.0]],
+            index=["BMW", "Renault", "Stellantis"],
+            columns=["BMW", "Renault", "Stellantis"],
+        )
+
+        summary = summarize_correlation_pairs(correlation)
+
+        self.assertEqual(summary["Most correlated pair"], "BMW / Renault")
+        self.assertEqual(summary["Most correlated value"], 0.8)
+        self.assertEqual(summary["Least correlated pair"], "Renault / Stellantis")
+        self.assertEqual(summary["Least correlated value"], -0.1)
+
+    def test_requires_two_companies(self):
+        correlation = pd.DataFrame([[1.0]], index=["BMW"], columns=["BMW"])
+
+        with self.assertRaisesRegex(ValueError, "At least two"):
+            summarize_correlation_pairs(correlation)
 
 
 class CorrelationHeatmapTests(unittest.TestCase):

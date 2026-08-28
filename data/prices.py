@@ -93,3 +93,30 @@ def calculate_weekly_return_correlation(
         index=price_history_by_company,
         columns=price_history_by_company,
     )
+
+
+def summarize_correlation_pairs(correlation: pd.DataFrame) -> dict[str, object]:
+    """Return the strongest and weakest distinct correlation pairs."""
+    if correlation.shape[0] < 2 or correlation.shape[1] < 2:
+        raise ValueError("At least two companies are required")
+
+    pairs = []
+    for row_index, company_a in enumerate(correlation.index):
+        for column_index, company_b in enumerate(correlation.columns):
+            if column_index <= row_index:
+                continue
+            value = correlation.loc[company_a, company_b]
+            if pd.notna(value):
+                pairs.append((company_a, company_b, float(value)))
+
+    if not pairs:
+        raise ValueError("Correlation matrix contains no comparable pairs")
+
+    strongest = max(pairs, key=lambda pair: pair[2])
+    weakest = min(pairs, key=lambda pair: pair[2])
+    return {
+        "Most correlated pair": f"{strongest[0]} / {strongest[1]}",
+        "Most correlated value": strongest[2],
+        "Least correlated pair": f"{weakest[0]} / {weakest[1]}",
+        "Least correlated value": weakest[2],
+    }
