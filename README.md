@@ -4,6 +4,8 @@
 
 Interactive financial analysis of Mercedes-Benz, BMW, Volkswagen, Stellantis, and Renault using live Yahoo Finance data.
 
+<!-- Add a dashboard screenshot here after the first deployment. -->
+
 ## What it shows
 
 - Normalized stock performance from a user-selected start date
@@ -48,3 +50,10 @@ tests/                 Offline unit tests
 ## Data source
 
 Market prices and financial statements are fetched from Yahoo Finance through the `yfinance` library. Data availability can vary by company and reporting period.
+
+## Deploy
+
+1. Push this repository to GitHub.
+2. Open [Streamlit Community Cloud](https://share.streamlit.io/) and connect the repository.
+3. Select `app.py` as the main file and deploy.
+4. Replace the live dashboard placeholder at the top of this README with the deployed URL.
