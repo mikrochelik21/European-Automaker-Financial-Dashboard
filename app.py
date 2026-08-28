@@ -10,6 +10,7 @@ from charts.fundamentals import (
     create_revenue_income_chart,
 )
 from charts.forecast import create_revenue_forecast_chart
+from charts.correlation import create_correlation_heatmap
 from charts.scenarios import create_revenue_scenarios_chart
 from charts.valuation import create_valuation_charts
 from config import (
@@ -24,6 +25,7 @@ from data.fundamentals import (
 )
 from data.prices import (
     build_indexed_prices,
+    calculate_weekly_return_correlation,
     fetch_price_histories,
     get_latest_market_date,
 )
@@ -129,6 +131,13 @@ with stock_tab:
                     "P/B": "{:.2f}x",
                 }
             ),
+            width="stretch",
+        )
+        st.subheader("Weekly return correlation")
+        st.caption("Correlation is calculated from weekly closing-price returns.")
+        correlation = calculate_weekly_return_correlation(price_histories)
+        st.plotly_chart(
+            create_correlation_heatmap(correlation),
             width="stretch",
         )
         st.subheader("Indexed performance data")
