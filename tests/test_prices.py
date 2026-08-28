@@ -13,11 +13,13 @@ from charts.fundamentals import (
 )
 from charts.forecast import create_revenue_forecast_chart
 from charts.scenarios import create_revenue_scenarios_chart
+from charts.correlation import create_correlation_heatmap
 from charts.valuation import create_valuation_charts
 from data.prices import (
     build_indexed_prices,
     fetch_price_history,
     fetch_price_histories,
+    calculate_weekly_return_correlation,
     get_latest_market_date,
     normalize_prices,
 )
@@ -93,6 +95,43 @@ class LatestMarketDateTests(unittest.TestCase):
     def test_rejects_empty_histories(self):
         with self.assertRaisesRegex(ValueError, "At least one price"):
             get_latest_market_date({})
+
+
+class WeeklyReturnCorrelationTests(unittest.TestCase):
+    def test_returns_symmetric_company_correlation_matrix(self):
+        dates = pd.date_range("2024-01-01", periods=30, freq="D")
+        histories = {
+            "BMW": pd.DataFrame({"Close": range(100, 130)}, index=dates),
+            "Renault": pd.DataFrame(
+                {"Close": range(200, 230)}, index=dates
+            ),
+        }
+
+        correlation = calculate_weekly_return_correlation(histories)
+
+        self.assertEqual(correlation.index.tolist(), ["BMW", "Renault"])
+        self.assertEqual(correlation.columns.tolist(), ["BMW", "Renault"])
+        self.assertTrue(correlation.equals(correlation.T))
+        self.assertAlmostEqual(correlation.loc["BMW", "BMW"], 1.0)
+
+    def test_rejects_empty_histories(self):
+        with self.assertRaisesRegex(ValueError, "At least one price"):
+            calculate_weekly_return_correlation({})
+
+
+class CorrelationHeatmapTests(unittest.TestCase):
+    def test_builds_heatmap_with_minus_one_to_one_scale(self):
+        correlation = pd.DataFrame(
+            [[1.0, 0.5], [0.5, 1.0]],
+            index=["BMW", "Renault"],
+            columns=["BMW", "Renault"],
+        )
+
+        figure = create_correlation_heatmap(correlation)
+
+        self.assertEqual(figure.data[0].type, "heatmap")
+        self.assertEqual(figure.data[0].zmin, -1)
+        self.assertEqual(figure.data[0].zmax, 1)
 
 
 class FetchIncomeStatementTests(unittest.TestCase):

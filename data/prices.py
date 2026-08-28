@@ -70,3 +70,26 @@ def build_indexed_prices(
         for company, history in price_history_by_company.items()
     }
     return pd.concat(indexed_by_company, axis=1).dropna()
+
+
+def calculate_weekly_return_correlation(
+    price_history_by_company: Mapping[str, pd.DataFrame],
+) -> pd.DataFrame:
+    """Calculate pairwise correlations of weekly closing-price returns."""
+    if not price_history_by_company:
+        raise ValueError("At least one price history is required")
+
+    closing_prices = pd.concat(
+        {
+            company: history["Close"]
+            for company, history in price_history_by_company.items()
+        },
+        axis=1,
+    )
+    weekly_prices = closing_prices.resample("W-FRI").last()
+    weekly_returns = weekly_prices.pct_change().dropna(how="all")
+    correlation = weekly_returns.corr()
+    return correlation.reindex(
+        index=price_history_by_company,
+        columns=price_history_by_company,
+    )
