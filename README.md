@@ -10,8 +10,13 @@ Interactive financial analysis of Mercedes-Benz, BMW, Volkswagen, Stellantis, an
 - Current P/E, EV/EBITDA, and P/B valuation comparisons
 - Historical revenue, net income, and EBITDA margin
 - Two-year revenue trend extrapolation with a 95% residual-based interval
+- Bear, base, and bull revenue scenarios using a transparent +/-10% adjustment
+- Weekly stock-return correlation heatmap with strongest and weakest pair summaries
+- Peer KPI cards, data freshness information, and partial-data warnings
 
 The forecast is a linear trend extrapolation, not a valuation model. It does not include management guidance, analyst estimates, macroeconomic scenarios, or company-specific events.
+
+The dashboard caches Yahoo Finance responses for one hour and includes a manual refresh control. Missing data for one company is reported without hiding successful peer results where possible.
 
 ## Tech stack
 
