@@ -1,8 +1,13 @@
 """Price-history transformations for the dashboard."""
 
+import logging
+
 import pandas as pd
 import streamlit as st
 from collections.abc import Mapping
+
+
+logger = logging.getLogger(__name__)
 
 
 @st.cache_data(ttl=3600)
@@ -30,6 +35,12 @@ def fetch_price_histories(
         try:
             histories[company] = fetch_price_history(ticker_symbol, start_date)
         except Exception as error:
+            logger.warning(
+                "Price history unavailable for %s (%s): %s",
+                company,
+                ticker_symbol,
+                error,
+            )
             failures[company] = str(error)
     return histories, failures
 

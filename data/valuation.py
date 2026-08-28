@@ -1,8 +1,13 @@
 """Valuation data fetched from Yahoo Finance."""
 
+import logging
+
 import streamlit as st
 import pandas as pd
 from collections.abc import Mapping
+
+
+logger = logging.getLogger(__name__)
 
 
 VALUATION_FIELDS = {
@@ -34,6 +39,12 @@ def fetch_valuation_snapshots(
         try:
             snapshots[company] = fetch_valuation_snapshot(ticker_symbol)
         except Exception as error:
+            logger.warning(
+                "Valuation data unavailable for %s (%s): %s",
+                company,
+                ticker_symbol,
+                error,
+            )
             failures[company] = str(error)
     return snapshots, failures
 
