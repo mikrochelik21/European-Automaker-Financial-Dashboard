@@ -33,7 +33,6 @@ from data.prices import (
 from data.summary import build_peer_summary, calculate_peer_kpis
 from data.valuation import (
     build_valuation_table,
-    fetch_valuation_snapshot,
     fetch_valuation_snapshots,
 )
 from data.forecast import calculate_forecast_metrics, forecast_revenue
@@ -100,40 +99,48 @@ with stock_tab:
             create_performance_chart(indexed_prices, COMPANY_COLORS),
             width="stretch",
         )
-        valuation_snapshots = {
-            company: fetch_valuation_snapshot(ticker)
-            for company, ticker in COMPANIES.items()
-        }
-        valuation_table = build_valuation_table(valuation_snapshots)
-        peer_summary = build_peer_summary(indexed_prices, valuation_table)
-        peer_kpis = calculate_peer_kpis(peer_summary)
-        kpi_columns = st.columns(3)
-        kpi_columns[0].metric(
-            "Best performer",
-            peer_kpis["Best performer"],
-            f"{peer_kpis['Best performer return (%)']:.2f}% return",
-        )
-        kpi_columns[1].metric(
-            "Average P/E",
-            f"{peer_kpis['Average P/E']:.2f}x",
-        )
-        kpi_columns[2].metric(
-            "Lowest EV/EBITDA",
-            peer_kpis["Lowest EV/EBITDA"],
-            f"{peer_kpis['Lowest EV/EBITDA value']:.2f}x",
-        )
-        st.subheader("Peer comparison summary")
-        st.dataframe(
-            peer_summary.style.format(
-                {
-                    "Stock return (%)": "{:.2f}%",
-                    "P/E": "{:.2f}x",
-                    "EV/EBITDA": "{:.2f}x",
-                    "P/B": "{:.2f}x",
-                }
-            ),
-            width="stretch",
-        )
+        valuation_snapshots, valuation_failures = fetch_valuation_snapshots(COMPANIES)
+        if valuation_failures:
+            st.warning(
+                "Valuation data unavailable for: "
+                + ", ".join(valuation_failures)
+            )
+        if valuation_snapshots:
+            valuation_table = build_valuation_table(valuation_snapshots)
+            peer_summary = build_peer_summary(indexed_prices, valuation_table)
+            st.subheader("Peer comparison summary")
+            st.dataframe(
+                peer_summary.style.format(
+                    {
+                        "Stock return (%)": "{:.2f}%",
+                        "P/E": "{:.2f}x",
+                        "EV/EBITDA": "{:.2f}x",
+                        "P/B": "{:.2f}x",
+                    }
+                ),
+                width="stretch",
+            )
+            try:
+                peer_kpis = calculate_peer_kpis(peer_summary)
+                kpi_columns = st.columns(3)
+                kpi_columns[0].metric(
+                    "Best performer",
+                    peer_kpis["Best performer"],
+                    f"{peer_kpis['Best performer return (%)']:.2f}% return",
+                )
+                kpi_columns[1].metric(
+                    "Average P/E",
+                    f"{peer_kpis['Average P/E']:.2f}x",
+                )
+                kpi_columns[2].metric(
+                    "Lowest EV/EBITDA",
+                    peer_kpis["Lowest EV/EBITDA"],
+                    f"{peer_kpis['Lowest EV/EBITDA value']:.2f}x",
+                )
+            except ValueError as error:
+                st.info(f"Peer KPIs unavailable: {error}")
+        else:
+            st.info("Peer valuation metrics are unavailable right now.")
         st.subheader("Weekly return correlation")
         st.caption("Correlation is calculated from weekly closing-price returns.")
         correlation = calculate_weekly_return_correlation(price_histories)

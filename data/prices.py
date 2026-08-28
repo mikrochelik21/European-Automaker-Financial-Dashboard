@@ -78,6 +78,15 @@ def calculate_weekly_return_correlation(
     """Calculate pairwise correlations of weekly closing-price returns."""
     if not price_history_by_company:
         raise ValueError("At least one price history is required")
+    missing_close = [
+        company
+        for company, history in price_history_by_company.items()
+        if "Close" not in history.columns
+    ]
+    if missing_close:
+        raise ValueError(
+            "Missing Close column for: " + ", ".join(missing_close)
+        )
 
     closing_prices = pd.concat(
         {

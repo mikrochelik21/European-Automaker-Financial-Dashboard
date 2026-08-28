@@ -119,6 +119,12 @@ class WeeklyReturnCorrelationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "At least one price"):
             calculate_weekly_return_correlation({})
 
+    def test_rejects_history_without_close_column(self):
+        histories = {"BMW": pd.DataFrame({"Price": [100.0]})}
+
+        with self.assertRaisesRegex(ValueError, "Missing Close column"):
+            calculate_weekly_return_correlation(histories)
+
 
 class CorrelationPairSummaryTests(unittest.TestCase):
     def test_finds_strongest_and_weakest_pairs(self):
@@ -353,6 +359,14 @@ class ForecastRevenueTests(unittest.TestCase):
     def test_rejects_insufficient_revenue_history(self):
         with self.assertRaisesRegex(ValueError, "At least two"):
             forecast_revenue(pd.Series([100.0]))
+
+    def test_rejects_non_positive_revenue(self):
+        revenue = pd.Series([100.0, 0.0])
+
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            calculate_forecast_metrics(revenue)
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            forecast_revenue(revenue)
 
 
 class RevenueScenarioTests(unittest.TestCase):

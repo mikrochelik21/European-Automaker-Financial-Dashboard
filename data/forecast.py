@@ -10,6 +10,8 @@ def calculate_forecast_metrics(revenue: pd.Series) -> dict[str, float]:
     clean_revenue = revenue.dropna()
     if len(clean_revenue) < 2:
         raise ValueError("At least two revenue observations are required")
+    if (clean_revenue <= 0).any():
+        raise ValueError("Revenue observations must be positive")
 
     historical_years = np.arange(len(clean_revenue), dtype=float)
     model = LinearRegression().fit(historical_years.reshape(-1, 1), clean_revenue)
@@ -39,6 +41,8 @@ def forecast_revenue(
         raise ValueError("At least two revenue observations are required")
     if forecast_years < 1:
         raise ValueError("Forecast years must be positive")
+    if (clean_revenue <= 0).any():
+        raise ValueError("Revenue observations must be positive")
 
     historical_years = np.arange(len(clean_revenue), dtype=float)
     model = LinearRegression().fit(historical_years.reshape(-1, 1), clean_revenue)
