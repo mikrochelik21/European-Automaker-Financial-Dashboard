@@ -40,6 +40,7 @@ from data.fundamentals import (
 )
 from data.forecast import calculate_forecast_metrics, forecast_revenue
 from data.scenarios import build_revenue_scenarios
+from data.backtesting import backtest_revenue_forecast
 
 
 class FetchPriceHistoryTests(unittest.TestCase):
@@ -367,6 +368,21 @@ class ForecastRevenueTests(unittest.TestCase):
             calculate_forecast_metrics(revenue)
         with self.assertRaisesRegex(ValueError, "must be positive"):
             forecast_revenue(revenue)
+
+
+class RevenueBacktestingTests(unittest.TestCase):
+    def test_calculates_one_year_ahead_error_metrics(self):
+        revenue = pd.Series([100.0, 110.0, 120.0, 130.0])
+
+        metrics = backtest_revenue_forecast(revenue)
+
+        self.assertAlmostEqual(metrics["MAE (EUR)"], 0.0)
+        self.assertAlmostEqual(metrics["MAPE (%)"], 0.0)
+        self.assertEqual(metrics["Backtest observations"], 2.0)
+
+    def test_rejects_too_few_observations(self):
+        with self.assertRaisesRegex(ValueError, "More revenue observations"):
+            backtest_revenue_forecast(pd.Series([100.0, 110.0]))
 
 
 class RevenueScenarioTests(unittest.TestCase):

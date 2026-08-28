@@ -37,6 +37,7 @@ from data.valuation import (
 )
 from data.forecast import calculate_forecast_metrics, forecast_revenue
 from data.scenarios import build_revenue_scenarios
+from data.backtesting import backtest_revenue_forecast
 
 
 st.set_page_config(
@@ -258,13 +259,16 @@ with forecast_tab:
             forecast_metrics = calculate_forecast_metrics(
                 forecast_fundamentals["Revenue"]
             )
+            backtest_metrics = backtest_revenue_forecast(
+                forecast_fundamentals["Revenue"]
+            )
             revenue_scenarios = build_revenue_scenarios(revenue_forecast)
 
         st.caption(
             f"{selected_company} | {len(forecast_fundamentals)} historical years | "
             f"Forecast horizon: {FORECAST_YEARS} years"
         )
-        forecast_metric_columns = st.columns(4)
+        forecast_metric_columns = st.columns(5)
         forecast_metric_columns[0].metric(
             "Historical CAGR",
             f"{forecast_metrics['Historical CAGR (%)']:.2f}%",
@@ -280,6 +284,10 @@ with forecast_tab:
         forecast_metric_columns[3].metric(
             "Residual spread",
             f"EUR {forecast_metrics['Residual standard deviation (EUR)'] / 1_000_000_000:.2f}bn",
+        )
+        forecast_metric_columns[4].metric(
+            "Backtest MAPE",
+            f"{backtest_metrics['MAPE (%)']:.2f}%",
         )
         st.plotly_chart(
             create_revenue_forecast_chart(
