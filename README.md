@@ -1,6 +1,6 @@
 # European Automaker Financial Dashboard
 
-**Live dashboard:** [Add the Streamlit Community Cloud URL after deployment](https://streamlit.io/)
+**Live dashboard:** https://eu-automaker-dashboard.streamlit.app/
 
 Interactive financial analysis of Mercedes-Benz, BMW, Volkswagen, Stellantis, and Renault using live Yahoo Finance data.
 
