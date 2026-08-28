@@ -12,6 +12,7 @@ from charts.fundamentals import (
     create_revenue_income_chart,
 )
 from charts.forecast import create_revenue_forecast_chart
+from charts.scenarios import create_revenue_scenarios_chart
 from charts.valuation import create_valuation_charts
 from data.prices import (
     build_indexed_prices,
@@ -319,6 +320,27 @@ class RevenueScenarioTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "between 0 and 1"):
             build_revenue_scenarios(base_forecast, adjustment=1.0)
+
+
+class RevenueScenariosChartTests(unittest.TestCase):
+    def test_shows_three_scenario_lines(self):
+        scenarios = pd.DataFrame(
+            {
+                "Bear case": [90.0],
+                "Base case": [100.0],
+                "Bull case": [110.0],
+            },
+            index=pd.to_datetime(["2025-12-31"]),
+        )
+
+        figure = create_revenue_scenarios_chart(scenarios, "BMW")
+
+        self.assertEqual(len(figure.data), 3)
+        self.assertEqual(
+            [trace.name for trace in figure.data],
+            ["Bear case", "Base case", "Bull case"],
+        )
+        self.assertEqual(figure.layout.hovermode, "x unified")
 
 
 class ForecastChartTests(unittest.TestCase):
