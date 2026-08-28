@@ -28,6 +28,7 @@ from data.prices import (
     calculate_weekly_return_correlation,
     fetch_price_histories,
     get_latest_market_date,
+    summarize_correlation_pairs,
 )
 from data.summary import build_peer_summary, calculate_peer_kpis
 from data.valuation import (
@@ -139,6 +140,18 @@ with stock_tab:
         st.plotly_chart(
             create_correlation_heatmap(correlation),
             width="stretch",
+        )
+        correlation_summary = summarize_correlation_pairs(correlation)
+        correlation_columns = st.columns(2)
+        correlation_columns[0].metric(
+            "Most correlated pair",
+            correlation_summary["Most correlated pair"],
+            f"{correlation_summary['Most correlated value']:.2f}",
+        )
+        correlation_columns[1].metric(
+            "Least correlated pair",
+            correlation_summary["Least correlated pair"],
+            f"{correlation_summary['Least correlated value']:.2f}",
         )
         st.subheader("Indexed performance data")
         display_prices = indexed_prices.copy()
