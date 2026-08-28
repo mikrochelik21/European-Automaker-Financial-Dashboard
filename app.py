@@ -10,8 +10,14 @@ from charts.fundamentals import (
     create_revenue_income_chart,
 )
 from charts.forecast import create_revenue_forecast_chart
+from charts.scenarios import create_revenue_scenarios_chart
 from charts.valuation import create_valuation_charts
-from config import COMPANIES, COMPANY_COLORS, DEFAULT_START_DATE, FORECAST_YEARS
+from config import (
+    COMPANIES,
+    COMPANY_COLORS,
+    DEFAULT_START_DATE,
+    FORECAST_YEARS,
+)
 from data.fundamentals import (
     calculate_ebitda_margin,
     load_prepared_fundamentals,
@@ -28,6 +34,7 @@ from data.valuation import (
     fetch_valuation_snapshots,
 )
 from data.forecast import calculate_forecast_metrics, forecast_revenue
+from data.scenarios import build_revenue_scenarios
 
 
 st.set_page_config(
@@ -222,6 +229,7 @@ with forecast_tab:
             forecast_metrics = calculate_forecast_metrics(
                 forecast_fundamentals["Revenue"]
             )
+            revenue_scenarios = build_revenue_scenarios(revenue_forecast)
 
         st.caption(
             f"{selected_company} | {len(forecast_fundamentals)} historical years | "
@@ -258,6 +266,16 @@ with forecast_tab:
         )
         st.dataframe(
             revenue_forecast.div(1_000_000_000).round(2),
+            width="stretch",
+        )
+        st.subheader("Scenario analysis")
+        st.caption("Bear and bull cases apply a transparent +/-10% adjustment to the base forecast.")
+        st.plotly_chart(
+            create_revenue_scenarios_chart(revenue_scenarios, selected_company),
+            width="stretch",
+        )
+        st.dataframe(
+            revenue_scenarios.div(1_000_000_000).round(2),
             width="stretch",
         )
     except ValueError as error:
